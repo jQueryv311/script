@@ -28,7 +28,7 @@
                                 "1","2","3","4","5","6","7","8","9","0","-","=","`","\\","/"]);
 
   let enabled = false; // start disabled
-
+  let indicatorHidden = false;
   // tiny status indicator
   function makeDot(){
     const d = document.createElement("div");
@@ -46,16 +46,26 @@
     d.style.color = "white";
     d.style.opacity = "0.75";
     d.style.pointerEvents = "none";
-    d.innerText = "AK script ⛔";
+    d.innerText = "KB ⛔";
     document.documentElement.appendChild(d);
     return d;
   }
+
   const dot = makeDot();
   function setDot(on){
-    if(!dot) return;
-    dot.innerText = on ? "AK script ✅" : "AK script ⛔";
-    dot.title = on ? "KeyBridge: active (press \\ to toggle)" : "KeyBridge: inactive (press \\ to toggle)";
+  if(!dot) return;
+
+  if (indicatorHidden) {
+    dot.style.display = "none";
+    return;
   }
+
+  dot.style.display = "block";
+  dot.innerText = on ? "AK script ✅" : "AK script ⛔";
+  dot.title = on
+    ? "KeyBridge: active (press \\ to toggle)"
+    : "KeyBridge: inactive (press \\ to toggle)";
+}
 
   async function fetchSnippetForKey(ch) {
     try {
@@ -90,6 +100,16 @@
   }
 
   async function onKey(e) {
+    // Toggle KB indicator visibility with "0"
+      if (e.key === "0") {
+        indicatorHidden = !indicatorHidden;
+      
+        if (dot) {
+          dot.style.display = indicatorHidden ? "none" : "block";
+        }
+        return;
+      }
+
     const ch = e.key;
     if (!ALLOWED_KEYS.has(ch)) return;
 
