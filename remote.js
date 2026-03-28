@@ -1,7 +1,3 @@
-// remote.js - KeyBridge client
-// Reads worker URL (?u=...) and token (?t=...) from the script src query.
-// Host this file publicly (GitHub) and reference via jsDelivr in the bookmarklet.
-
 (function _KeyBridge(){
   if (window.__KeyBridgeLoaded) return;
   window.__KeyBridgeLoaded = true;
@@ -50,14 +46,14 @@
     d.style.color = "white";
     d.style.opacity = "0.75";
     d.style.pointerEvents = "none";
-    d.innerText = "KB ⛔";
+    d.innerText = "AK ⛔";
     document.documentElement.appendChild(d);
     return d;
   }
   const dot = makeDot();
   function setDot(on){
     if(!dot) return;
-    dot.innerText = on ? "KB ✅" : "KB ⛔";
+    dot.innerText = on ? "AK ✅" : "AK ⛔";
     dot.title = on ? "KeyBridge: active (press \\ to toggle)" : "KeyBridge: inactive (press \\ to toggle)";
   }
 
