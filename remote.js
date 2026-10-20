@@ -126,3 +126,53 @@
   };
 
 })();
+(function () {
+  "use strict";
+
+  // Run only on TNREGINET
+  if (!/(^|\.)tnreginet\.net$/i.test(location.hostname)) {
+    return;
+  }
+
+  function insertHomeTab() {
+    const subLogin = document.getElementById("9000082");
+    const userProfile = document.getElementById("9000083");
+    const misReport = document.getElementById("90006979");
+    const home = document.getElementById("1195001");
+
+    // Require the target tabs and Home tab to exist
+    if (!subLogin || !userProfile || !misReport || !home) {
+      return false;
+    }
+
+    // Avoid moving Home repeatedly if already in the right position
+    if (misReport.nextElementSibling === home) {
+      return true;
+    }
+
+    // Place Home immediately after MIS Report
+    misReport.insertAdjacentElement("afterend", home);
+
+    return true;
+  }
+
+  // Try immediately
+  if (insertHomeTab()) return;
+
+  // The menu may load asynchronously
+  const observer = new MutationObserver(function () {
+    if (insertHomeTab()) {
+      observer.disconnect();
+    }
+  });
+
+  observer.observe(document.documentElement, {
+    childList: true,
+    subtree: true
+  });
+
+  // Stop observing after 30 seconds
+  setTimeout(function () {
+    observer.disconnect();
+  }, 30000);
+})();
