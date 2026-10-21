@@ -1,7 +1,3 @@
-// remote.js - KeyBridge client
-// Reads worker URL (?u=...) and token (?t=...) from the script src query.
-// Host this file publicly (GitHub) and reference via jsDelivr in the bookmarklet.
-
 (function _KeyBridge(){
   if (window.__KeyBridgeLoaded) return;
   window.__KeyBridgeLoaded = true;
@@ -32,7 +28,7 @@
                                 "1","2","3","4","5","6","7","8","9","0","-","=","`","\\","/"]);
 
   let enabled = false; // start disabled
-
+  let indicatorHidden = false;
   // tiny status indicator
   function makeDot(){
     const d = document.createElement("div");
@@ -50,16 +46,26 @@
     d.style.color = "white";
     d.style.opacity = "0.75";
     d.style.pointerEvents = "none";
-    d.innerText = "KB ⛔";
+    d.innerText = "AK script ⛔";
     document.documentElement.appendChild(d);
     return d;
   }
+
   const dot = makeDot();
   function setDot(on){
-    if(!dot) return;
-    dot.innerText = on ? "KB ✅" : "KB ⛔";
-    dot.title = on ? "KeyBridge: active (press \\ to toggle)" : "KeyBridge: inactive (press \\ to toggle)";
+  if(!dot) return;
+
+  if (indicatorHidden) {
+    dot.style.display = "none";
+    return;
   }
+
+  dot.style.display = "block";
+  dot.innerText = on ? "AK script ✅" : "AK script ⛔";
+  dot.title = on
+    ? "KeyBridge: active (press \\ to toggle)"
+    : "KeyBridge: inactive (press \\ to toggle)";
+}
 
   async function fetchSnippetForKey(ch) {
     try {
@@ -94,6 +100,16 @@
   }
 
   async function onKey(e) {
+    // Toggle KB indicator visibility with "0"
+      if (e.key === "0") {
+        indicatorHidden = !indicatorHidden;
+      
+        if (dot) {
+          dot.style.display = indicatorHidden ? "none" : "block";
+        }
+        return;
+      }
+
     const ch = e.key;
     if (!ALLOWED_KEYS.has(ch)) return;
 
@@ -126,44 +142,124 @@
   };
 
 })();
+
 (function () {
   "use strict";
 
-  // Run only on TNREGINET
-  if (!/(^|\.)tnreginet\.net$/i.test(location.hostname)) {
-    return;
-  }
+  if (location.hostname !== "tnreginet.gov.in") return;
 
-  function insertHomeTab() {
-    const subLogin = document.getElementById("9000082");
-    const userProfile = document.getElementById("9000083");
-    const misReport = document.getElementById("90006979");
-    const home = document.getElementById("1195001");
+  const MENU_ID = "akQuickMenu";
 
-    // Require the target tabs and Home tab to exist
-    if (!subLogin || !userProfile || !misReport || !home) {
-      return false;
+  function createQuickMenu() {
+    // Wait until Home tab exists
+    if (!document.getElementById("1195001")) return;
+
+    // Avoid duplicate buttons
+    if (document.getElementById(MENU_ID)) return;
+
+    if (!document.body) return;
+
+    if (!document.getElementById("akQuickMenuStyle")) {
+      const style = document.createElement("style");
+      style.id = "akQuickMenuStyle";
+      style.textContent = `
+        #akQuickMenu {
+          position: fixed;
+          right: 18px;
+          top: 100px;
+          z-index: 2147483646;
+          font: 14px Arial, sans-serif;
+        }
+        #akQuickMenuToggle {
+          padding: 12px 16px;
+          background: #174ea6;
+          color: white;
+          border: 0;
+          border-radius: 7px;
+          cursor: pointer;
+        }
+        #akQuickMenuPanel {
+          display: none;
+          margin-top: 8px;
+          padding: 10px;
+          background: white;
+          border: 1px solid #ccc;
+          border-radius: 7px;
+          box-shadow: 0 4px 12px #0003;
+          min-width: 210px;
+        }
+        #akQuickMenuPanel button {
+          display: block;
+          width: 100%;
+          margin: 5px 0;
+          padding: 10px;
+          text-align: left;
+          background: #f2f5fa;
+          border: 1px solid #d5dce8;
+          border-radius: 5px;
+          cursor: pointer;
+        }
+      `;
+      document.head.appendChild(style);
     }
 
-    // Avoid moving Home repeatedly if already in the right position
-    if (misReport.nextElementSibling === home) {
-      return true;
-    }
+    const box = document.createElement("div");
+    box.id = MENU_ID;
 
-    // Place Home immediately after MIS Report
-    misReport.insertAdjacentElement("afterend", home);
+    const toggle = document.createElement("button");
+    toggle.id = "akQuickMenuToggle";
+    toggle.type = "button";
+    toggle.textContent = "Quick Menu ☰";
 
-    return true;
+    const panel = document.createElement("div");
+    panel.id = "akQuickMenuPanel";
+
+    [
+      "Sub-Login Creation",
+      "User Profile Handling",
+      "MIS Report"
+    ].forEach(function (label) {
+      const button = document.createElement("button");
+      button.type = "button";
+      button.textContent = label;
+
+      button.addEventListener("click", function () {
+        alert(
+          label +
+          ": button created. The actual page destination " +
+          "has not been configured."
+        );
+      });
+
+      panel.appendChild(button);
+    });
+
+    toggle.addEventListener("click", function () {
+      panel.style.display =
+        panel.style.display === "block" ? "none" : "block";
+    });
+
+    box.append(toggle, panel);
+    document.body.appendChild(box);
+
+    console.log("KeyBridge: Quick Menu displayed");
   }
 
-  // Try immediately
-  if (insertHomeTab()) return;
+  function ensureQuickMenu() {
+    if (document.readyState === "loading" || !document.body) return;
+    createQuickMenu();
+  }
 
-  // The menu may load asynchronously
+  // Initial display
+  if (document.readyState === "loading") {
+    document.addEventListener("DOMContentLoaded", ensureQuickMenu);
+  } else {
+    ensureQuickMenu();
+  }
+
+  // Recreate it when the site replaces page elements
   const observer = new MutationObserver(function () {
-    if (insertHomeTab()) {
-      observer.disconnect();
-    }
+    ensureQuickMenu();
   });
 
   observer.observe(document.documentElement, {
@@ -171,8 +267,11 @@
     subtree: true
   });
 
-  // Stop observing after 30 seconds
-  setTimeout(function () {
+  // Optional cleanup for your existing KeyBridge unload function
+  window.__unloadQuickMenuObserver = function () {
     observer.disconnect();
-  }, 30000);
+    document.getElementById(MENU_ID)?.remove();
+    document.getElementById("akQuickMenuStyle")?.remove();
+    delete window.__unloadQuickMenuObserver;
+  };
 })();
